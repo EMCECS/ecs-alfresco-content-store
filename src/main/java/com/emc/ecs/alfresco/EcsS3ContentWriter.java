@@ -36,7 +36,6 @@ public class EcsS3ContentWriter extends AbstractContentWriter implements Content
     private File tempFile;
 
     /**
-     * @param contentUrl
      * @param existingContentReader
      * @param adapter 
      */

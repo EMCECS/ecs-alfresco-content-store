@@ -23,6 +23,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+
 import com.emc.object.Protocol;
 import com.emc.object.s3.LargeFileUploader;
 import com.emc.object.s3.S3Config;
@@ -36,6 +38,8 @@ import com.emc.rest.smart.ecs.Vdc;
  */
 public class EcsS3Adapter {
 
+    private static Logger log = Logger.getLogger(EcsS3Adapter.class);
+
     /**
      * Name of the properties file holding parameters. This is searched for in
      * the classpath and the home directory, e.g., => $HOME/ecsS3.properties.
@@ -48,24 +52,24 @@ public class EcsS3Adapter {
     private static final String BUCKET_NAME = "alfresco.bucketName";
 
     /**
-     * Property key for the boolean to decide whether to enable VHOST.
-     */
-    private static final String ENABLE_VHOST = null;
-
-    /**
-     * Property key for the ECS S3 endpoint URL string.
-     */
-    private static final String ENDPOINT = null;
-
-    /**
      * Property key for the ECS S3 access key.
      */
-    private static final String ACCESS_KEY = null;
+    private static final String ACCESS_KEY = "s3.access_key";
 
     /**
      * Property key for the ECS S3 secret key.
      */
-    private static final String SECRET_KEY = null;
+    private static final String SECRET_KEY = "s3.secret_key";
+
+    /**
+     * Property key for the ECS S3 endpoint URL string.
+     */
+    private static final String ENDPOINT = "s3.endpoint";
+
+    /**
+     * Property key for the boolean to decide whether to enable VHOST.
+     */
+    private static final String ENABLE_VHOST = "s3.enable_vhost";
 
     /**
      * The client used to connect with the ECS S3 instance.
@@ -80,12 +84,11 @@ public class EcsS3Adapter {
     /**
      * Properties for the adapter.
      */
-    private final Properties _properties;
+    private static final Properties _properties = loadProperties();
 
     public EcsS3Adapter() throws Exception {
-        _properties = loadProperties();
         _client = new S3JerseyClient(getS3Config());
-        _bucketName = getProperty(BUCKET_NAME);
+        _bucketName = getProperty(BUCKET_NAME, "alfresco");
     }
 
     /**
@@ -145,25 +148,37 @@ public class EcsS3Adapter {
             _client.createBucket(bucketName);
         }
         String key = getKey(writer.getContentUrl());
-        LargeFileUploader largeFileUploader = new LargeFileUploader(_client, bucketName, key, writer.getTempFile());
-        largeFileUploader.run();
+        if (writer.getTempFile().length() < 0) {
+
+        } else {
+            LargeFileUploader largeFileUploader = new LargeFileUploader(_client, bucketName, key, writer.getTempFile());
+            S3ObjectMetadata objectMetadata = new S3ObjectMetadata();
+            objectMetadata.setContentType("binary/octet-stream");
+            largeFileUploader.setObjectMetadata(objectMetadata );
+            largeFileUploader.run();
+        }
     }
 
     /**
      * @param contentUrl
      * @return The metadata.
      */
-    private S3ObjectMetadata getObjectMetadata(String contentUrl) {
+    S3ObjectMetadata getObjectMetadata(String contentUrl) {
         String bucketName = getBucketName(contentUrl);
         String key = getKey(contentUrl);
-        return _client.getObjectMetadata(bucketName, key);
+        try {
+            return _client.getObjectMetadata(bucketName, key);
+        } catch (Exception e) {
+            log.debug("Failure getting metadata for " + contentUrl, e);
+        }
+        return null;
     }
 
     /**
      * @param contentUrl
      * @return
      */
-    private String getBucketName(String contentUrl) {
+    String getBucketName(String contentUrl) {
         return _bucketName;
     }
 
@@ -171,15 +186,16 @@ public class EcsS3Adapter {
      * @param contentUrl
      * @return
      */
-    private String getKey(String contentUrl) {
-        return contentUrl.substring(EcsS3ContentStore.PROTOCOL_AND_DELIMITER_LENGTH);
+    String getKey(String contentUrl) {
+        return ((contentUrl == null) || (contentUrl.length() < EcsS3ContentStore.PROTOCOL_AND_DELIMITER_LENGTH)) ? ""
+                : contentUrl.substring(EcsS3ContentStore.PROTOCOL_AND_DELIMITER_LENGTH);
     }
 
     /**
      * @return
-     * @throws URISyntaxException 
+     * @throws URISyntaxException
      */
-    private S3Config getS3Config() throws URISyntaxException {
+    static S3Config getS3Config() throws URISyntaxException {
         String accessKey = getProperty(ACCESS_KEY);
         String secretKey = getProperty(SECRET_KEY);
         URI endpoint = new URI(getProperty(ENDPOINT));
@@ -202,7 +218,7 @@ public class EcsS3Adapter {
      *            The key for the property.
      * @return The property value.
      */
-    protected final String getProperty(String propertyKey) {
+    protected static final String getProperty(String propertyKey) {
         return _properties.getProperty(propertyKey);
     }
 
@@ -213,7 +229,7 @@ public class EcsS3Adapter {
      * @return The property value, or the default if the property value is
      *         missing.
      */
-    protected final String getProperty(String propertyKey, String defaultValue) {
+    protected static final String getProperty(String propertyKey, String defaultValue) {
         return _properties.getProperty(propertyKey, defaultValue);
     }
 
@@ -222,9 +238,8 @@ public class EcsS3Adapter {
      * loaded.
      * 
      * @return The properties.
-     * @throws IOException
      */
-    protected static Properties loadProperties() throws IOException {
+    protected static Properties loadProperties() {
         return loadProperties(PROPERTIES_FILE_NAME);
     }
 
@@ -237,26 +252,37 @@ public class EcsS3Adapter {
      *            The file name.
      * @return the contents of the properties file as a
      *         {@link java.util.Properties} object.
-     * @throws IOException
      */
-    protected static Properties loadProperties(String fileName) throws IOException {
-        String fullFileName = fileName + ".properties";
-        InputStream inputStream = EcsS3Adapter.class.getClassLoader().getResourceAsStream(fullFileName);
-        if (inputStream == null) {
-            // Check in home directory
-            File homeProperties = new File(System.getProperty("user.home") + File.separator + fullFileName);
-            if (homeProperties.exists()) {
-                inputStream = new FileInputStream(homeProperties);
+    protected static Properties loadProperties(String fileName) {
+        Properties properties = new Properties();
+        InputStream inputStream = null;
+        try {
+            String fullFileName = fileName + ".properties";
+            inputStream = EcsS3Adapter.class.getClassLoader().getResourceAsStream(fullFileName);
+            if (inputStream == null) {
+                // Check in home directory
+                File homeProperties = new File(System.getProperty("user.home") + File.separator + fullFileName);
+                if (homeProperties.exists()) {
+                    inputStream = new FileInputStream(homeProperties);
+                }
+            }
+
+            if (inputStream == null) {
+                throw new FileNotFoundException("Properties file cannot be located: " + fullFileName);
+            }
+
+            properties.load(inputStream);
+        } catch (Exception e) {
+            log.fatal(e.getMessage(), e);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    log.warn(e.getMessage(), e);
+                }
             }
         }
-
-        if (inputStream == null) {
-            throw new FileNotFoundException("Properties file cannot be located: " + fullFileName);
-        }
-
-        Properties properties = new Properties();
-        properties.load(inputStream);
-        inputStream.close();
         return properties;
     }
 
