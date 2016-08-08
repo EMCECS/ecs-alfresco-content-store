@@ -34,7 +34,7 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
 
     public static final int PROTOCOL_AND_DELIMITER_LENGTH = PROTOCOL_AND_DELIMITER.length();
 
-    Log log = LogFactory.getLog(EcsS3ContentStore.class);
+    private static Log log = LogFactory.getLog(EcsS3ContentStore.class);
 
     private final EcsS3Adapter _adapter;
 
@@ -127,7 +127,9 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
      */
     public static String createNewUrl() {
         StringBuilder sb = new StringBuilder(PROTOCOL_AND_DELIMITER);
-        return sb.append(GUID.generate()).toString();
+        String url = sb.append(GUID.generate()).toString();
+        log.error("New ecs url: " + url);
+        return url;
     }
 
 }
