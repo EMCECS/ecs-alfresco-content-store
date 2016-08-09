@@ -77,6 +77,12 @@ public class EcsS3Adapter {
     private static final String ENABLE_VHOST = "ecss3.enable_vhost";
 
     /**
+     * Property key for the boolean to decide whether to use the smart client.
+     * This client should not be used if the S3 instance is behind a firewall.
+     */
+    private static final String SMART_CLIENT = "ecss3.smart_client";
+
+    /**
      * The client used to connect with the ECS S3 instance.
      */
     private final S3JerseyClient _client;
@@ -292,11 +298,12 @@ public class EcsS3Adapter {
      * @return
      * @throws URISyntaxException
      */
-    static S3Config getS3Config() throws URISyntaxException {
+    private static S3Config getS3Config() throws URISyntaxException {
         String accessKey = getProperty(ACCESS_KEY);
         String secretKey = getProperty(SECRET_KEY);
         URI endpoint = new URI(getProperty(ENDPOINT));
         boolean enableVhost = Boolean.parseBoolean(getProperty(ENABLE_VHOST, Boolean.FALSE.toString()));
+        boolean smartClient = Boolean.parseBoolean(getProperty(SMART_CLIENT, Boolean.FALSE.toString()));
 
         S3Config s3Config;
         if (enableVhost) {
@@ -307,7 +314,7 @@ public class EcsS3Adapter {
         } else {
             s3Config = new S3Config(Protocol.valueOf(endpoint.getScheme().toUpperCase()), endpoint.getHost());
         }
-        return s3Config.withIdentity(accessKey).withSecretKey(secretKey);
+        return s3Config.withIdentity(accessKey).withSecretKey(secretKey).withSmartClient(smartClient);
     }
 
     /**

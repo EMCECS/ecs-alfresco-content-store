@@ -14,11 +14,8 @@
  */
 package com.emc.ecs.alfresco;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.alfresco.service.cmr.repository.ContentIOException;
-import org.eclipse.jetty.util.log.Log;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,17 +24,6 @@ import org.junit.Test;
  *
  */
 public class Test_EcsS3Adapter extends Assert {
-
-    @Test
-    public void testGetS3Config() throws Exception {
-        assertEquals(false, EcsS3Adapter.getS3Config().isUseVHost());
-        assertEquals("david_test", EcsS3Adapter.getS3Config().getIdentity());
-        assertEquals("8MmdziEA62T7Aj4tXh09DigQy0sovHKjlx60tZVU", EcsS3Adapter.getS3Config().getSecretKey());
-        assertEquals("http", EcsS3Adapter.getS3Config().getProtocol().toString().toLowerCase());
-        assertEquals(1, EcsS3Adapter.getS3Config().getVdcs().size());
-        assertEquals("10.1.83.51", EcsS3Adapter.getS3Config().getVdcs().get(0).getName());
-        assertEquals(9020, EcsS3Adapter.getS3Config().getPort());
-    }
 
     @Test
     public void testGetBucketName() throws Exception {
