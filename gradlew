@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+#
+# Copyright (c) 2016 EMC Corporation. All Rights Reserved.
+#
+# Licensed under the EMC Software License Agreement for Free Software (the "License").
+# You may not use this file except in compliance with the License.
+# A copy of the License is located at
+#
+# https://github.com/EMCECS/ecs-alfresco-content-store/blob/master/LICENSE.txt
+#
+# or in the "LICENSE.txt" file accompanying this file.
+#
 
 ##############################################################################
 ##
