@@ -9,7 +9,7 @@ EMC and Customer enter into this Agreement and this Agreement shall become effec
  NOW, THEREFORE, in consideration of the premises and obligations contained herein, it is agreed as follows:
 1.0 DEFINITIONS
 1.1 “Equipment” means the open source software product Elastic Cloud Storage.
-1.2 “Software” means the ECS Zimbra Storage Manager.
+1.2 “Software” means the ECS Alfresco Storage Manager.
 2.0 PURPOSE AND SCOPE 
 2.1 The Software shall be used for Customer’s internal business purposes and in accordance with EMC’s instructions and documentation.  The Software is available from EMC to Customer at no charge, but only after Customer agrees to the license terms as contained in this Agreement. 
 2.2 Under this Agreement, Customer may use the Software on the related Equipment it owns.  
