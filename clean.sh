@@ -18,4 +18,4 @@ if [[ -z ${MAVEN_OPTS} ]]; then
     MAVEN_OPTS="-Xms256m -Xmx1524m -XX:PermSize=300m"
 fi
 echo "MAVEN_OPTS is set to '$MAVEN_OPTS'";
-mvn package -Pamp-to-war
+mvn clean -Pamp-to-war

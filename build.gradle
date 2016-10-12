@@ -41,9 +41,16 @@ task buildAmp(type: Exec) {
     commandLine './compile.sh'
 }
 
+task cleanAmp(type: Exec) {
+    workingDir '.'
+    commandLine './clean.sh'
+}
+
 defaultTasks 'distZip'
 
 distZip.dependsOn buildAmp
+
+clean.dependsOn cleanAmp
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
