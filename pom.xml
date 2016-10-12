@@ -18,11 +18,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.emc.ecs</groupId>
-    <artifactId>alfresco-content-store</artifactId>
+    <artifactId>ecs-alfresco-content-store</artifactId>
     <version>1.0-rc1</version>
-    <name>alfresco-content-store Repository AMP project</name>
+    <name>ecs-alfresco-content-store Repository AMP project</name>
     <packaging>amp</packaging>
-    <description>Manages the lifecycle of the alfresco-content-store Repository AMP (Alfresco Module Package)</description>
+    <description>Manages the lifecycle of the ecs-alfresco-content-store Repository AMP (Alfresco Module Package)</description>
 
     <parent>
         <groupId>org.alfresco.maven</groupId>
