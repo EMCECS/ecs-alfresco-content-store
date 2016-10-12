@@ -1,16 +1,28 @@
-/**
- * Copyright 2016 EMC Corporation. All Rights Reserved.
+/*
+ * Copyright (c) 2016, EMC Corporation.
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
  *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
+ * + Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * + Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * + The name of EMC Corporation may not be used to endorse or promote
+ *   products derived from this software without specific prior written
+ *   permission.
  *
- * http://www.apache.org/licenses/LICENSE-2.0.txt
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 package com.emc.ecs.alfresco;
 
@@ -32,9 +44,8 @@ import com.emc.object.s3.LargeFileUploader;
 import com.emc.object.s3.S3Config;
 import com.emc.object.s3.S3ObjectMetadata;
 import com.emc.object.s3.bean.GetObjectResult;
-import com.emc.object.s3.bean.PingItem;
-import com.emc.object.s3.bean.PingResponse;
 import com.emc.object.s3.jersey.S3JerseyClient;
+import com.emc.object.util.ConfigUri;
 import com.emc.rest.smart.ecs.Vdc;
 
 /**
@@ -83,6 +94,12 @@ public class EcsS3Adapter {
     private static final String SMART_CLIENT = "ecss3.smart_client";
 
     /**
+     * Property key for the config URI, which specifies all client config properties in a single string.
+     * If this is set, then the properties SMART_CLIENT, ENABLE_VHOST, ENDPOINT, ACCESS_KEY and SECRET_KEY are not used.
+     */
+    private static final String CONFIG_URI = "ecss3.config_uri";
+
+    /**
      * The client used to connect with the ECS S3 instance.
      */
     private final S3JerseyClient _client;
@@ -92,12 +109,6 @@ public class EcsS3Adapter {
      */
     private final String _bucketName;
 
-    private final int _port;
-
-    private final Protocol _protocol;
-
-    private final String _host;
-
     /**
      * Properties for the adapter.
      */
@@ -106,9 +117,6 @@ public class EcsS3Adapter {
     public EcsS3Adapter() throws Exception {
         log.error("Creating EcsS3Adapter");
         S3Config s3Config = getS3Config();
-        _protocol = s3Config.getProtocol();
-        _host = s3Config.getVdcs().get(0).getName();
-        _port = s3Config.getPort();
         _client = new S3JerseyClient(s3Config);
         _bucketName = getProperty(BUCKET_NAME, "alfresco");
     }
@@ -299,22 +307,29 @@ public class EcsS3Adapter {
      * @throws URISyntaxException
      */
     private static S3Config getS3Config() throws URISyntaxException {
-        String accessKey = getProperty(ACCESS_KEY);
-        String secretKey = getProperty(SECRET_KEY);
-        URI endpoint = new URI(getProperty(ENDPOINT));
-        boolean enableVhost = Boolean.parseBoolean(getProperty(ENABLE_VHOST, Boolean.FALSE.toString()));
-        boolean smartClient = Boolean.parseBoolean(getProperty(SMART_CLIENT, Boolean.FALSE.toString()));
-
         S3Config s3Config;
-        if (enableVhost) {
-            s3Config = new S3Config(endpoint).withUseVHost(true);
-        } else if (endpoint.getPort() > 0) {
-            s3Config = new S3Config(Protocol.valueOf(endpoint.getScheme().toUpperCase()), new Vdc(endpoint.getHost()));
-            s3Config.setPort(endpoint.getPort());
+        String configUriString = getProperty(CONFIG_URI);
+        if (StringUtils.isNotBlank(configUriString)) {
+            ConfigUri<S3Config> s3Uri = new ConfigUri<S3Config>(S3Config.class);
+            s3Config = s3Uri.parseUri(configUriString);
         } else {
-            s3Config = new S3Config(Protocol.valueOf(endpoint.getScheme().toUpperCase()), endpoint.getHost());
+            String accessKey = getProperty(ACCESS_KEY);
+            String secretKey = getProperty(SECRET_KEY);
+            URI endpoint = new URI(getProperty(ENDPOINT));
+            boolean enableVhost = Boolean.parseBoolean(getProperty(ENABLE_VHOST, Boolean.FALSE.toString()));
+            boolean smartClient = Boolean.parseBoolean(getProperty(SMART_CLIENT, Boolean.FALSE.toString()));
+    
+            if (enableVhost) {
+                s3Config = new S3Config(endpoint).withUseVHost(true);
+            } else if (endpoint.getPort() > 0) {
+                s3Config = new S3Config(Protocol.valueOf(endpoint.getScheme().toUpperCase()), new Vdc(endpoint.getHost()));
+                s3Config.setPort(endpoint.getPort());
+            } else {
+                s3Config = new S3Config(Protocol.valueOf(endpoint.getScheme().toUpperCase()), endpoint.getHost());
+            }
+            s3Config.withIdentity(accessKey).withSecretKey(secretKey).withSmartClient(smartClient);
         }
-        return s3Config.withIdentity(accessKey).withSecretKey(secretKey).withSmartClient(smartClient);
+        return s3Config;
     }
 
     /**
