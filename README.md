@@ -19,6 +19,7 @@ You MUST do this before you first run Alfresco, as changing the content storage 
   - http://docs.alfresco.com/5.1/tasks/amp-install.html
 
 You must also add the following properties to your alfresco-global.properties file:
+
     #where to store the data
     ecss3.bucketName=
     #configuration parameters for the ecs client - legacy version
