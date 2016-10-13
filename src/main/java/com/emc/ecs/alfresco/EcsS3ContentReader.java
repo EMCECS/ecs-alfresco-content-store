@@ -25,11 +25,14 @@ import org.alfresco.service.cmr.repository.ContentReader;
  */
 public class EcsS3ContentReader extends AbstractContentReader implements ContentReader {
 
+    /**
+     * The adapter that does the work.
+     */
     private final EcsS3Adapter _adapter;
 
     /**
-     * @param contentUrl
-     * @param adapter 
+     * @param contentUrl The Alfresco URL to be read.
+     * @param adapter The adapter that does the work.
      */
     protected EcsS3ContentReader(String contentUrl, EcsS3Adapter adapter) {
         super(contentUrl);

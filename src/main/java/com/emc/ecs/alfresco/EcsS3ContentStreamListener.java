@@ -22,13 +22,19 @@ import org.alfresco.service.cmr.repository.ContentStreamListener;
  */
 public class EcsS3ContentStreamListener extends AbstractContentStreamListener implements ContentStreamListener {
 
+    /**
+     * The adapter that does the work.
+     */
     private final EcsS3Adapter _adapter;
 
+    /**
+     * The writer that was streaming data to a temporary file.
+     */
     private final EcsS3ContentWriter _writer;
 
     /**
-     * @param adapter
-     * @param writer
+     * @param adapter The adapter that does the work.
+     * @param writer The writer that was streaming data to a temporary file.
      */
     public EcsS3ContentStreamListener(EcsS3Adapter adapter, EcsS3ContentWriter writer) {
         _adapter = adapter;

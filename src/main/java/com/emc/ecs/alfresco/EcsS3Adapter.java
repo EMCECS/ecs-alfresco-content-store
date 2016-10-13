@@ -100,15 +100,18 @@ public class EcsS3Adapter {
      */
     private static final Properties _properties = loadProperties();
 
+    /**
+     * The only constructor. Reads configuration parameters from a properties file.
+     * @throws Exception
+     */
     public EcsS3Adapter() throws Exception {
-        log.error("Creating EcsS3Adapter");
         S3Config s3Config = getS3Config();
         _client = new S3JerseyClient(s3Config);
         _bucketName = getProperty(BUCKET_NAME, "alfresco");
     }
 
     /**
-     * @param contentUrl
+     * @param contentUrl The Alfresco URL.
      */
     public void delete(String contentUrl) {
         String bucketName = getBucketName(contentUrl);
@@ -119,16 +122,16 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param contentUrl
-     * @return
+     * @param contentUrl The Alfresco URL.
+     * @return <code>true</code> if it exists, <code>false</code> otherwise.
      */
     public boolean exists(String contentUrl) {
         return exists(getObjectMetadata(contentUrl));
     }
 
     /**
-     * @param contentUrl
-     * @return
+     * @param contentUrl The Alfresco URL.
+     * @return The data stream.
      */
     public InputStream getInputStream(String contentUrl) {
         GetObjectResult<InputStream> getObjectResult = _client.getObject(getBucketName(contentUrl), getKey(contentUrl));
@@ -143,8 +146,9 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param metadata
-     * @return
+     * Internal function to check metadata for existence
+     * @param metadata The object metadata from S3.
+     * @return <code>true</code> if it exists, <code>false</code> otherwise.
      */
     private boolean exists(S3ObjectMetadata metadata) {
         if (metadata != null) {
@@ -185,8 +189,8 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param contentUrl
-     * @return
+     * @param contentUrl 
+     * @return The <code>long</code> corresponding to the last modified timestamp.
      */
     public long getLastModified(String contentUrl) {
         S3ObjectMetadata objectMetadata = getObjectMetadata(contentUrl);
@@ -195,8 +199,8 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param contentUrl
-     * @return
+     * @param contentUrl The Alfresco URL.
+     * @return The size in bytes.
      */
     public long getSize(String contentUrl) {
         S3ObjectMetadata objectMetadata = getObjectMetadata(contentUrl);
@@ -204,7 +208,8 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param writer
+     * This is the code that persists the streamed data, which is temporarily stored in a file until the stream is closed.
+     * @param writer The writer used by Alfresco.
      * @throws Exception
      */
     public void closeStream(EcsS3ContentWriter writer) throws Exception {
@@ -215,10 +220,12 @@ public class EcsS3Adapter {
             _client.createBucket(bucketName);
         }
         String key = getKey(writer.getContentUrl());
-        String content = getContent(writer.getTempFile());
-        log.error("Saving content from " + writer.getTempFile().getAbsolutePath() + " below.");
-        log.error(content);
-        log.error("End of content to save.");
+        if (log.isDebugEnabled()) {
+            String content = getContent(writer.getTempFile());
+            log.debug("Saving content from " + writer.getTempFile().getAbsolutePath() + " below.");
+            log.debug(content);
+            log.debug("End of content to save.");
+        }
         String contentType = "binary/octet-stream";
         if (0 == writer.getTempFile().length()) {
             _client.putObject(bucketName, key, "", contentType);
@@ -232,8 +239,9 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param tempFile
-     * @return
+     * Returns the content. Used only for debug logging.
+     * @param tempFile The temporary file to which data was streamed.
+     * @return The content.
      * @throws Exception 
      */
     private String getContent(File tempFile) throws Exception {
@@ -254,7 +262,7 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param contentUrl
+     * @param contentUrl The Alfresco URL.
      * @return The metadata.
      */
     S3ObjectMetadata getObjectMetadata(String contentUrl) {
@@ -272,16 +280,16 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @param contentUrl
-     * @return
+     * @param contentUrl The Alfresco URL.
+     * @return The bucket name.
      */
     String getBucketName(String contentUrl) {
         return _bucketName;
     }
 
     /**
-     * @param contentUrl
-     * @return
+     * @param contentUrl The Alfresco URL.
+     * @return The object key.
      */
     String getKey(String contentUrl) {
         return ((contentUrl == null) || (contentUrl.length() < EcsS3ContentStore.PROTOCOL_AND_DELIMITER_LENGTH)) ? ""
@@ -289,7 +297,7 @@ public class EcsS3Adapter {
     }
 
     /**
-     * @return
+     * @return The S3Config.
      * @throws URISyntaxException
      */
     private static S3Config getS3Config() throws URISyntaxException {

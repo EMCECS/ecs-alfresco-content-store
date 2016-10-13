@@ -29,13 +29,20 @@ import org.alfresco.util.TempFileProvider;
  */
 public class EcsS3ContentWriter extends AbstractContentWriter implements ContentWriter {
 
+    /**
+     * The adapter that does all of the work.
+     */
     private final EcsS3Adapter _adapter;
 
+    /**
+     * The temporary file to which data will be streamed.
+     */
     private File tempFile;
 
     /**
-     * @param existingContentReader
-     * @param adapter 
+     * @param contentUrl The Alfresco URL.
+     * @param existingContentReader The reader for the content.
+     * @param adapter The adapter that does all of the work.
      */
     protected EcsS3ContentWriter(String contentUrl, ContentReader existingContentReader, EcsS3Adapter adapter) {
         super(contentUrl, existingContentReader);
@@ -51,6 +58,9 @@ public class EcsS3ContentWriter extends AbstractContentWriter implements Content
         return _adapter.getSize(getContentUrl());
     }
 
+    /**
+     * @return The temporary file to which data will be streamed.
+     */
     public File getTempFile() {
         return tempFile;
     }

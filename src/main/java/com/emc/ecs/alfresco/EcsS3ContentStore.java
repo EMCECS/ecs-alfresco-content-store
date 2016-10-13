@@ -34,8 +34,15 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
 
     private static Log log = LogFactory.getLog(EcsS3ContentStore.class);
 
+    /**
+     *  The adapter that does the work.
+     */
     private final EcsS3Adapter _adapter;
 
+    /**
+     * All parameters are read from properties files.
+     * @throws Exception
+     */
     public EcsS3ContentStore() throws Exception {
         _adapter = new EcsS3Adapter();
     }
