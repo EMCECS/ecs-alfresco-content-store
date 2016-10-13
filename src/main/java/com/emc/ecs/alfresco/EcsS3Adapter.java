@@ -86,6 +86,12 @@ public class EcsS3Adapter {
     private static final String CONFIG_URI = "ecss3.config_uri";
 
     /**
+     * Property key for the large file upload threshold.
+     * the default for this is .
+     */
+    private static final String LARGE_FILE_UPLOAD_THRESHOLD = "ecss3.large_file_upload_threshold";
+
+    /**
      * The client used to connect with the ECS S3 instance.
      */
     private final S3JerseyClient _client;
@@ -94,6 +100,11 @@ public class EcsS3Adapter {
      * The bucket name used to store alfresco content.
      */
     private final String _bucketName;
+
+    /**
+     * The threshold for using the large file uploader.
+     */
+    private final long _largeFileUploadThreshold;
 
     /**
      * Properties for the adapter.
@@ -108,6 +119,7 @@ public class EcsS3Adapter {
         S3Config s3Config = getS3Config();
         _client = new S3JerseyClient(s3Config);
         _bucketName = getProperty(BUCKET_NAME, "alfresco");
+        _largeFileUploadThreshold = Long.parseLong(getProperty(LARGE_FILE_UPLOAD_THRESHOLD, "10485760"));
     }
 
     /**
@@ -220,15 +232,19 @@ public class EcsS3Adapter {
             _client.createBucket(bucketName);
         }
         String key = getKey(writer.getContentUrl());
+        String content = null;
         if (log.isDebugEnabled()) {
-            String content = getContent(writer.getTempFile());
+            content = getContent(writer.getTempFile());
             log.debug("Saving content from " + writer.getTempFile().getAbsolutePath() + " below.");
             log.debug(content);
             log.debug("End of content to save.");
         }
         String contentType = "binary/octet-stream";
-        if (0 == writer.getTempFile().length()) {
-            _client.putObject(bucketName, key, "", contentType);
+        if (_largeFileUploadThreshold >= writer.getTempFile().length()) {
+            if (content == null) {
+                content = getContent(writer.getTempFile());
+            }
+            _client.putObject(bucketName, key, content, contentType);
         } else {
             LargeFileUploader largeFileUploader = new LargeFileUploader(_client, bucketName, key, writer.getTempFile());
             S3ObjectMetadata objectMetadata = new S3ObjectMetadata();
@@ -239,7 +255,7 @@ public class EcsS3Adapter {
     }
 
     /**
-     * Returns the content. Used only for debug logging.
+     * Returns the content. Used for transferring small files and for debug logging.
      * @param tempFile The temporary file to which data was streamed.
      * @return The content.
      * @throws Exception 
@@ -247,6 +263,9 @@ public class EcsS3Adapter {
     private String getContent(File tempFile) throws Exception {
         InputStream inputStream = new FileInputStream(tempFile);
         try {
+            if (tempFile.length() == 0) {
+                return "";
+            }
             byte[] bytes = new byte[inputStream.available()];
             inputStream.read(bytes);
             return new String(bytes);
