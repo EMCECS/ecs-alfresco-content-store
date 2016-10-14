@@ -1,5 +1,13 @@
 Library: lzma-sdk-4j
+Source code: http://repo1.maven.org/maven2/org/b1/pack/lzma-sdk-4j/9.22.0/lzma-sdk-4j-9.22.0-sources.jar
 License: Public Domain
+Full copyright text:
+-----------------------------------------------------------------------------------------------------------------------
+LZMA SDK is placed in the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute the original LZMA SDK code, either in source
+code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.
+-----------------------------------------------------------------------------------------------------------------------
 Full License Text:
 -----------------------------------------------------------------------------------------------------------------------
 LZMA SDK is written and placed in the public domain by Igor Pavlov.
