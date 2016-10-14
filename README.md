@@ -35,4 +35,8 @@ You must also add the following properties to your alfresco-global.properties fi
     ecss3.smart_client=
     #configuration parameters for the ecs client - new version
     ecss3.config_uri=
+    #threshold for multipart file upload (bytes).
+    ecss3.large_file_upload_threshold=10485760
+    #part size when using multipart file upload (bytes).
+    ecss3.large_file_part_size=3145728
 

@@ -84,9 +84,15 @@ public class EcsS3Adapter {
 
     /**
      * Property key for the large file upload threshold.
-     * the default for this is .
+     * the default for this is 10485760.
      */
     private static final String LARGE_FILE_UPLOAD_THRESHOLD = "ecss3.large_file_upload_threshold";
+
+    /**
+     * Property key for the large file part size.
+     * the default for this is 3145728.
+     */
+    private static final String LARGE_FILE_PART_SIZE = "ecss3.large_file_part_size";
 
     /**
      * The client used to connect with the ECS S3 instance.
@@ -104,6 +110,11 @@ public class EcsS3Adapter {
     private final long _largeFileUploadThreshold;
 
     /**
+     * The part size when using the large file uploader.
+     */
+    private final long _largeFilePartSize;
+
+    /**
      * Properties for the adapter.
      */
     private static final Properties _properties = loadProperties();
@@ -117,6 +128,7 @@ public class EcsS3Adapter {
         _client = new S3JerseyClient(s3Config);
         _bucketName = getProperty(BUCKET_NAME, "alfresco");
         _largeFileUploadThreshold = Long.parseLong(getProperty(LARGE_FILE_UPLOAD_THRESHOLD, "10485760"));
+        _largeFilePartSize = Long.parseLong(getProperty(LARGE_FILE_PART_SIZE, "3145728"));
     }
 
     /**
@@ -244,6 +256,7 @@ public class EcsS3Adapter {
             _client.putObject(bucketName, key, content, contentType);
         } else {
             LargeFileUploader largeFileUploader = new LargeFileUploader(_client, bucketName, key, writer.getTempFile());
+            largeFileUploader.setPartSize(_largeFilePartSize);
             S3ObjectMetadata objectMetadata = new S3ObjectMetadata();
             objectMetadata.setContentType(contentType);
             largeFileUploader.setObjectMetadata(objectMetadata);
