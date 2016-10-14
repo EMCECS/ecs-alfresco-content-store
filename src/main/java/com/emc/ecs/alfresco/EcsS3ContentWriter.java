@@ -6,9 +6,6 @@
  * A copy of the License is located at
  *
  * https://github.com/EMCECS/ecs-alfresco-content-store/blob/master/LICENSE.txt
- *
- * or in the "LICENSE.txt" file accompanying this file.
- *
  */
 package com.emc.ecs.alfresco;
 

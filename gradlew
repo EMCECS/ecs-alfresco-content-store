@@ -8,8 +8,6 @@
 #
 # https://github.com/EMCECS/ecs-alfresco-content-store/blob/master/LICENSE.txt
 #
-# or in the "LICENSE.txt" file accompanying this file.
-#
 
 ##############################################################################
 ##

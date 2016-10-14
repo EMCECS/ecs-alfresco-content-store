@@ -8,8 +8,6 @@
 #
 # https://github.com/EMCECS/ecs-alfresco-content-store/blob/master/LICENSE.txt
 #
-# or in the "LICENSE.txt" file accompanying this file.
-#
 if [[ -z ${MAVEN_OPTS} ]]; then
     echo "The environment variable 'MAVEN_OPTS' is not set, setting it for you";
     MAVEN_OPTS="-Xms256m -Xmx1524m -XX:PermSize=300m"
