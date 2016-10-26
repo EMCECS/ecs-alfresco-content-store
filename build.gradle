@@ -9,7 +9,7 @@
  */
 description = 'Alfresco ECS Content Source - lets an Alfresco Repository instance use ECS as a back-end content store. http://docs.alfresco.com/5.1/references/dev-extension-points-custom-content-store.html'
 group = 'com.emc.ecs'
-version = '1.0-rc1'
+version = '1.0.0-rc2'
 
 ext.githubProjectName = 'ecs-alfresco-content-store'
 ext.licenseName = 'EMC Software License Agreement - Free Software'

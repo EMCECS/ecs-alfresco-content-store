@@ -30,6 +30,7 @@ import com.emc.object.s3.bean.GetObjectResult;
 import com.emc.object.s3.jersey.S3JerseyClient;
 import com.emc.object.util.ConfigUri;
 import com.emc.rest.smart.ecs.Vdc;
+import com.google.gdata.util.common.base.StringUtil;
 
 /**
  * @author seibed
@@ -241,17 +242,20 @@ public class EcsS3Adapter {
             _client.createBucket(bucketName);
         }
         String key = getKey(writer.getContentUrl());
-        String content = null;
+        Object content = null;
         if (log.isDebugEnabled()) {
             content = getContent(writer.getTempFile());
             log.debug("Saving content from " + writer.getTempFile().getAbsolutePath() + " below.");
-            log.debug(content);
+            log.debug((String) content);
             log.debug("End of content to save.");
         }
         String contentType = "binary/octet-stream";
         if (_largeFileUploadThreshold >= writer.getTempFile().length()) {
             if (content == null) {
                 content = getContent(writer.getTempFile());
+            }
+            if (StringUtil.isEmpty((String) content)) {
+                content = new byte[0];
             }
             _client.putObject(bucketName, key, content, contentType);
         } else {
