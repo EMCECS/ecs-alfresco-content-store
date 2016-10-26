@@ -8,3 +8,4 @@
  * https://github.com/EMCECS/ecs-alfresco-content-store/blob/master/LICENSE.txt
  */
 rootProject.name = 'ecs-alfresco-content-store'
+include 'ecs-content-store'
