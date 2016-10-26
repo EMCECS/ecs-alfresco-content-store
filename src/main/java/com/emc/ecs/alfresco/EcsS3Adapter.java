@@ -238,7 +238,7 @@ public class EcsS3Adapter {
         String bucketName = getBucketName(writer.getContentUrl());
         if (!_client.bucketExists(bucketName)) {
             // create a new bucket
-            log.error("Creating bucket " + bucketName);
+            log.debug("Creating bucket " + bucketName);
             _client.createBucket(bucketName);
         }
         String key = getKey(writer.getContentUrl());
@@ -301,13 +301,12 @@ public class EcsS3Adapter {
     S3ObjectMetadata getObjectMetadata(String contentUrl) {
         String bucketName = getBucketName(contentUrl);
         String key = getKey(contentUrl);
-        log.error("Getting metadata from " + bucketName + " for " + key);
+        log.debug("Getting metadata from " + bucketName + " for " + key);
         try {
             S3ObjectMetadata metadata = _client.getObjectMetadata(bucketName, key);
             return metadata;
         } catch (Exception e) {
-            log.error("Failure getting metadata for " + contentUrl);
-            log.debug("Failure getting metadata for " + contentUrl, e);
+            log.error("Failure getting metadata for " + contentUrl, e);
         }
         return null;
     }
@@ -366,7 +365,7 @@ public class EcsS3Adapter {
      */
     protected static final String getProperty(String propertyKey) {
         String property = _properties.getProperty(propertyKey);
-        log.error("Property " + propertyKey + ": " + property);
+        log.debug("Property " + propertyKey + ": " + property);
         return property;
     }
 
@@ -379,7 +378,7 @@ public class EcsS3Adapter {
      */
     protected static final String getProperty(String propertyKey, String defaultValue) {
         String property = _properties.getProperty(propertyKey, defaultValue);
-        log.error("Property " + propertyKey + ": " + property);
+        log.debug("Property " + propertyKey + ": " + property);
         return property;
     }
 
@@ -405,7 +404,7 @@ public class EcsS3Adapter {
      */
     protected static Properties loadProperties(String fileName) {
         Properties properties = new Properties();
-        log.error("Loading properties " + fileName);
+        log.debug("Loading properties " + fileName);
         InputStream inputStream = null;
         try {
             String fullFileName = fileName + ".properties";
@@ -423,7 +422,7 @@ public class EcsS3Adapter {
             }
 
             properties.load(inputStream);
-            log.error("Properties loaded.");
+            log.debug("Properties loaded.");
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
