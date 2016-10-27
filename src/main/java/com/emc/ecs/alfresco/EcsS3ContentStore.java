@@ -34,14 +34,28 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
     /**
      *  The adapter that does the work.
      */
-    private final EcsS3Adapter _adapter;
+    private static final EcsS3Adapter _adapter;
+    static {
+        _adapter = makeAdapter();
+    }
 
     /**
      * All parameters are read from properties files.
      * @throws Exception
      */
     public EcsS3ContentStore() throws Exception {
-        _adapter = new EcsS3Adapter();
+    }
+
+    /**
+     * @return the adapter, or null if it can't be created
+     */
+    private static EcsS3Adapter makeAdapter() {
+        try {
+            return new EcsS3Adapter();
+        } catch (Exception e) {
+            log.fatal(e);
+        }
+        return null;
     }
 
     /* (non-Javadoc)
@@ -130,6 +144,7 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
     public static String createNewUrl() {
         StringBuilder sb = new StringBuilder(PROTOCOL_AND_DELIMITER);
         String url = sb.append(GUID.generate()).toString();
+        _adapter.createObject(url);
         log.debug("New ecs url: " + url);
         return url;
     }

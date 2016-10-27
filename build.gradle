@@ -9,44 +9,62 @@
  */
 description = 'Alfresco ECS Content Source - lets an Alfresco Repository instance use ECS as a back-end content store. http://docs.alfresco.com/5.1/references/dev-extension-points-custom-content-store.html'
 group = 'com.emc.ecs'
-version = '1.0.0-rc1'
-
-ext.githubProjectName = 'ecs-alfresco-content-store'
-ext.licenseName = 'EMC Software License Agreement - Free Software'
-ext.licenseUrl = 'https://raw.githubusercontent.com/EMCECS/ecs-alfresco-content-store/master/LICENSE.txt'
+version = '1.0.0-rc2'
 
 buildscript {
     repositories {
+        mavenLocal()
         mavenCentral()
+        maven {
+            url 'https://artifacts.alfresco.com/nexus/content/groups/public/'
+        }
     }
+    dependencies {
+        classpath group: 'org.alfresco.gradle', name: 'alfresco-gradle-plugins', version: '0.1.9.1'
+        classpath group: 'com.yahoo.platform.yui', name: 'yuicompressor', version: '2.4.6'
+    }
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
-apply plugin: 'maven'
+apply plugin: 'amp'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url 'https://artifacts.alfresco.com/nexus/content/groups/public/'
+    }
+}
 
 configurations {
-    jars.extendsFrom(signatures)
-    export // specifies additional artifacts in the root distribution
+    jars
+    deps
+    ampLib {
+        extendsFrom deps
+        transitive = true
+    }
+    ampLib.exclude group: 'org.slf4j'
+    ampLib.exclude group: 'org.apache.httpcomponents'
+    ampLib.exclude group: 'commons-codec'
+    ampLib.exclude module: 'commons-lang3'
+    compile {
+        extendsFrom deps
+    }
 }
 
-task buildAmp(type: Exec) {
-    workingDir '.'
-    commandLine './compile.sh'
-}
 
-task cleanAmp(type: Exec) {
-    workingDir '.'
-    commandLine './clean.sh'
+dependencies {
+    deps "com.emc.ecs:object-client:2.2.4",
+         "org.apache.commons:commons-lang3:3.4"
 }
 
 defaultTasks 'distZip'
 
-distZip.dependsOn buildAmp
-
-clean.dependsOn cleanAmp
+distZip.dependsOn amp
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
@@ -54,51 +72,8 @@ task sourcesJar(type: Jar) {
 }
 
 artifacts {
+    jars jar
     jars sourcesJar
-}
-
-repositories {
-    jcenter { url 'http://jcenter.bintray.com/' }
-}
-
-dependencies {
-}
-
-def projectPom = {
-    project {
-        name project.name
-        description project.description
-        url 'https://community.emc.com/community/products/ecs#developer'
-
-        scm {
-            url scmUrl
-            connection scmConnection
-            developerConnection scmConnection
-        }
-
-        licenses {
-            license {
-                name licenseName
-                url licenseUrl
-                distribution 'repo'
-            }
-        }
-
-        developers {
-            developer {
-                id 'EMCECS'
-                name 'EMC ECS'
-            }
-        }
-    }
-}
-
-task writePom {
-    ext.pomFile = file("$buildDir/pom.xml")
-    outputs.file pomFile
-    doLast {
-        pom(projectPom).writeTo pomFile
-    }
 }
 
 jar {
@@ -108,20 +83,16 @@ jar {
                     'Class-Path': configurations.runtime.collect { it.getName() }.join(' ')
         }
     }
-    into("META-INF/maven/$project.group/$project.name") {
-        from writePom
-    }
 }
 
 distributions {
     main {
         contents {
             from configurations.jars.artifacts.files
-            from configurations.export.artifacts.files
             from('.') {
                 include '*.txt'
             }
-            from('target') {
+            from('build/distributions') {
                 include '*.amp'
             }
             into('3rd-party-licenses') {
