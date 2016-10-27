@@ -96,6 +96,11 @@ public class EcsS3Adapter {
     private static final String LARGE_FILE_PART_SIZE = "ecss3.large_file_part_size";
 
     /**
+     * Content type for all content.
+     */
+    private static final String CONTENT_TYPE = "binary/octet-stream";
+
+    /**
      * The client used to connect with the ECS S3 instance.
      */
     private final S3JerseyClient _client;
@@ -128,6 +133,11 @@ public class EcsS3Adapter {
         S3Config s3Config = getS3Config();
         _client = new S3JerseyClient(s3Config);
         _bucketName = getProperty(BUCKET_NAME, "alfresco");
+        if (!_client.bucketExists(_bucketName)) {
+            // create a new bucket
+            log.debug("Creating bucket " + _bucketName);
+            _client.createBucket(_bucketName);
+        }
         _largeFileUploadThreshold = Long.parseLong(getProperty(LARGE_FILE_UPLOAD_THRESHOLD, "10485760"));
         _largeFilePartSize = Long.parseLong(getProperty(LARGE_FILE_PART_SIZE, "3145728"));
     }
@@ -136,10 +146,16 @@ public class EcsS3Adapter {
      * @param contentUrl The Alfresco URL.
      */
     public void delete(String contentUrl) {
-        String bucketName = getBucketName(contentUrl);
-        _client.deleteObject(bucketName, getKey(contentUrl));
-        if (_client.listObjects(bucketName).getObjects().isEmpty()) {
-            _client.deleteBucket(bucketName);
+        if (log.isDebugEnabled()) {
+            log.debug("Deleting " + contentUrl);
+        }
+        try {
+            String bucketName = getBucketName(contentUrl);
+            _client.deleteObject(bucketName, getKey(contentUrl));
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Error deleting " + contentUrl);
+            }
         }
     }
 
@@ -148,6 +164,9 @@ public class EcsS3Adapter {
      * @return <code>true</code> if it exists, <code>false</code> otherwise.
      */
     public boolean exists(String contentUrl) {
+        if (log.isDebugEnabled()) {
+            log.debug("Checking existence for " + contentUrl);
+        }
         return exists(getObjectMetadata(contentUrl));
     }
 
@@ -156,6 +175,9 @@ public class EcsS3Adapter {
      * @return The data stream.
      */
     public InputStream getInputStream(String contentUrl) {
+        if (log.isDebugEnabled()) {
+            log.debug("Getting input stream " + contentUrl);
+        }
         GetObjectResult<InputStream> getObjectResult = _client.getObject(getBucketName(contentUrl), getKey(contentUrl));
         if (!exists(getObjectResult.getObjectMetadata())) {
             throw new NullPointerException("The object " + contentUrl + " does not exist");
@@ -215,6 +237,9 @@ public class EcsS3Adapter {
      * @return The <code>long</code> corresponding to the last modified timestamp.
      */
     public long getLastModified(String contentUrl) {
+        if (log.isDebugEnabled()) {
+            log.debug("Getting last modified for " + contentUrl);
+        }
         S3ObjectMetadata objectMetadata = getObjectMetadata(contentUrl);
         return ((objectMetadata == null) || (objectMetadata.getLastModified() == null)) ? 0
                 : objectMetadata.getLastModified().getTime();
@@ -225,6 +250,9 @@ public class EcsS3Adapter {
      * @return The size in bytes.
      */
     public long getSize(String contentUrl) {
+        if (log.isDebugEnabled()) {
+            log.debug("Getting size for " + contentUrl);
+        }
         S3ObjectMetadata objectMetadata = getObjectMetadata(contentUrl);
         return (objectMetadata == null) ? 0 : objectMetadata.getContentLength();
     }
@@ -235,12 +263,10 @@ public class EcsS3Adapter {
      * @throws Exception
      */
     public void closeStream(EcsS3ContentWriter writer) throws Exception {
-        String bucketName = getBucketName(writer.getContentUrl());
-        if (!_client.bucketExists(bucketName)) {
-            // create a new bucket
-            log.debug("Creating bucket " + bucketName);
-            _client.createBucket(bucketName);
+        if (log.isDebugEnabled()) {
+            log.debug("Closing stream for " + writer.getContentUrl());
         }
+        String bucketName = getBucketName(writer.getContentUrl());
         String key = getKey(writer.getContentUrl());
         Object content = null;
         if (log.isDebugEnabled()) {
@@ -249,7 +275,6 @@ public class EcsS3Adapter {
             log.debug((String) content);
             log.debug("End of content to save.");
         }
-        String contentType = "binary/octet-stream";
         if (_largeFileUploadThreshold >= writer.getTempFile().length()) {
             if (content == null) {
                 content = getContent(writer.getTempFile());
@@ -257,15 +282,22 @@ public class EcsS3Adapter {
             if (StringUtil.isEmpty((String) content)) {
                 content = new byte[0];
             }
-            _client.putObject(bucketName, key, content, contentType);
+            _client.putObject(bucketName, key, content, CONTENT_TYPE);
         } else {
             LargeFileUploader largeFileUploader = new LargeFileUploader(_client, bucketName, key, writer.getTempFile());
             largeFileUploader.setPartSize(_largeFilePartSize);
             S3ObjectMetadata objectMetadata = new S3ObjectMetadata();
-            objectMetadata.setContentType(contentType);
+            objectMetadata.setContentType(CONTENT_TYPE);
             largeFileUploader.setObjectMetadata(objectMetadata);
             largeFileUploader.run();
         }
+    }
+
+    /**
+     * @param contentUrl The Alfresco URL.
+     */
+    void createObject(String contentUrl) {
+        _client.putObject(getBucketName(contentUrl), getKey(contentUrl), new byte[0], CONTENT_TYPE);
     }
 
     /**
@@ -306,7 +338,7 @@ public class EcsS3Adapter {
             S3ObjectMetadata metadata = _client.getObjectMetadata(bucketName, key);
             return metadata;
         } catch (Exception e) {
-            log.error("Failure getting metadata for " + contentUrl, e);
+            log.error("Returning null metadata for " + contentUrl, e);
         }
         return null;
     }
