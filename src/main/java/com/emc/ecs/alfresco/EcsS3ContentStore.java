@@ -130,7 +130,7 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
     public static String createNewUrl() {
         StringBuilder sb = new StringBuilder(PROTOCOL_AND_DELIMITER);
         String url = sb.append(GUID.generate()).toString();
-        log.error("New ecs url: " + url);
+        log.debug("New ecs url: " + url);
         return url;
     }
 
