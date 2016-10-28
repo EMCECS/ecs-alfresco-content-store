@@ -263,24 +263,19 @@ public class EcsS3Adapter {
      * @throws Exception
      */
     public void closeStream(EcsS3ContentWriter writer) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Closing stream for " + writer.getContentUrl());
-        }
         String bucketName = getBucketName(writer.getContentUrl());
         String key = getKey(writer.getContentUrl());
-        Object content = null;
+        byte[] content = null;
         if (log.isDebugEnabled()) {
+            log.debug("Closing stream for " + writer.getContentUrl());
             content = getContent(writer.getTempFile());
-            log.debug("Saving content from " + writer.getTempFile().getAbsolutePath() + " below.");
-            log.debug((String) content);
-            log.debug("End of content to save.");
+            log.debug(">>>> Saving content from " + writer.getTempFile().getAbsolutePath() + " below.");
+            log.debug(new String(content));
+            log.debug(">>>> End of content to save.");
         }
-        if (_largeFileUploadThreshold >= writer.getTempFile().length()) {
+        if ((writer.getTempFile() != null) || (_largeFileUploadThreshold >= writer.getTempFile().length())) {
             if (content == null) {
                 content = getContent(writer.getTempFile());
-            }
-            if (StringUtil.isEmpty((String) content)) {
-                content = new byte[0];
             }
             _client.putObject(bucketName, key, content, CONTENT_TYPE);
         } else {
@@ -306,15 +301,15 @@ public class EcsS3Adapter {
      * @return The content.
      * @throws Exception 
      */
-    private String getContent(File tempFile) throws Exception {
+    private byte[] getContent(File tempFile) throws Exception {
         InputStream inputStream = new FileInputStream(tempFile);
         try {
-            if (tempFile.length() == 0) {
-                return "";
+            if ((tempFile == null) || (tempFile.length() == 0)) {
+                return new byte[0];
             }
             byte[] bytes = new byte[inputStream.available()];
             inputStream.read(bytes);
-            return new String(bytes);
+            return bytes;
         } finally {
             if (inputStream != null) {
                 try {
