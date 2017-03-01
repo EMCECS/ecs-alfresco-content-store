@@ -53,7 +53,8 @@ public class EcsS3ContentStore extends AbstractContentStore implements ContentSt
         try {
             return new EcsS3Adapter();
         } catch (Exception e) {
-            log.fatal(e);
+            String message = "The ECS Alfresco Content Store failed to start, probably due to a configuration error. Configuration instructions are available at https://github.com/EMCECS/ecs-alfresco-content-store/wiki. " + e.getMessage();
+            log.fatal(message, e);
         }
         return null;
     }
