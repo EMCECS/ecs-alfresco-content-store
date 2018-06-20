@@ -1,6 +1,6 @@
 ecs-alfresco-content-store
 ===
-This is a Content Store implementation to store data in EMC Elastic Cloud Storage via S3. This produces an Alfresco Module Package (amp) file, configured to use ECS S3 for primary storage. You could also use S3 for other storage purposes, such as content replication. In that case, you will need to change the configuration files appropriately to support that other use case and then rebuild the amp.
+This is a Content Store implementation to store data in EMC ECS via S3. This produces an Alfresco Module Package (amp) file, configured to use ECS S3 for primary storage. You could also use S3 for other storage purposes, such as content replication. In that case, you will need to change the configuration files appropriately to support that other use case and then rebuild the amp.
 
 How to develop and build
 ---
